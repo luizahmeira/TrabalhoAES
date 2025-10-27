@@ -1,6 +1,9 @@
 from tkinter import filedialog
-
+from openpyxl.descriptors import NoneSet
+import Cifragem as cfm
 import customtkinter as ctk
+
+caminho_arquivo = None
 
 def definindo_aparencia():
     ctk.set_appearance_mode("dark")
@@ -13,6 +16,7 @@ def criando_janela_programa():
     return app
 
 def seletor_arquivo(entrada_destino):
+    global caminho_arquivo
     caminho = filedialog.askopenfilename(
         title="Selecione o arquivo para cifrar ou decifrar",
         filetypes=[("Arquivos de texto", "*.txt"), ("Todos os arquivos", "*.*")]
@@ -21,13 +25,18 @@ def seletor_arquivo(entrada_destino):
         entrada_destino.delete(0, "end")
         entrada_destino.insert(0, caminho)
 
+    caminho_arquivo = caminho
+
 def botao_clicado():
     print("ainda falta fazer os metodos")
+
+def efetuar_cifragem():
+    print(cfm.cifragem(caminho_arquivo))
 
 def chave_cifragem_decifragem(app):
     entrada_chave = ctk.CTkEntry(
         master=app,
-        placeholder_text="Informe a chave de cifragem e decifragem aqui...",
+        placeholder_text="Informe a chave de cifragem ou decifragem aqui...",
         width=400,
         height=40
     )
@@ -44,7 +53,7 @@ def cifrar_decifrar(app):
         hover_color="grey",
         text_color="black",
         width=150,
-        command=botao_clicado
+        command=lambda: efetuar_cifragem()
     )
     cifragem.pack(side="left",pady=20)
 
