@@ -16,7 +16,7 @@ def criando_janela_programa():
     return app
 
 def seletor_arquivo(entrada_destino):
-    global caminho_arquivo
+    global caminho_arquivo_entrada
     caminho = filedialog.askopenfilename(
         title="Selecione o arquivo para cifrar ou decifrar",
         filetypes=[("Arquivos de texto", "*.txt"), ("Todos os arquivos", "*.*")]
@@ -25,13 +25,17 @@ def seletor_arquivo(entrada_destino):
         entrada_destino.delete(0, "end")
         entrada_destino.insert(0, caminho)
 
-    caminho_arquivo = caminho
+    caminho_arquivo_entrada = caminho
 
 def botao_clicado():
     print("ainda falta fazer os metodos")
 
 def efetuar_cifragem():
-    print(cfm.cifragem(caminho_arquivo))
+    caminho_arquivo_saida = entrada_destino.get()
+    if not caminho_arquivo_saida:
+        print("Não foi informado um caminho de destino")
+        return
+    cfm.cifragem(caminho_arquivo_entrada,caminho_arquivo_saida)
 
 def chave_cifragem_decifragem(app):
     entrada_chave = ctk.CTkEntry(
@@ -88,9 +92,11 @@ def escolher_arquivo(app):
     btn_arquivo.pack(pady=20)
     entrada_destino.pack(pady=(30, 10))
 
+    return entrada_destino
+
 definindo_aparencia()
 app = criando_janela_programa()
-escolher_arquivo(app)
+entrada_destino = escolher_arquivo(app)
 chave_cifragem_decifragem(app)
 cifrar_decifrar(app)
 app.mainloop()

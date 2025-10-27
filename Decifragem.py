@@ -18,37 +18,14 @@ def escrever_arquivo(caminho_arquivo_saida,dados_cifrados):
         f.write(dados_cifrados)
 
 '''antes de fazer a cifragem precisamos fazer o padding dos dados, usando o AES que é aquela separação de blocos de 16 bytes'''
-def aplicar_padding_PKCS7(dados):
-    print(len(dados))
+def remover_padding_PKCS7(dados):
     tamanho_bloco = 16
-    faltando = tamanho_bloco - (len(dados) % tamanho_bloco)
-    if faltando == 0:
-        faltando = tamanho_bloco
-    padding = bytes([faltando] * faltando)
-    dados_com_padding = dados + padding
-    print(len(dados_com_padding))
-    print(dados_com_padding)
-    return dados_com_padding
+    ultimo_byte = dados[-1]
+    if ultimo_byte < 1 or ultimo_byte > tamanho_bloco:
+        raise ValueError("padding invalido")
+    return dados[:-ultimo_byte]
 
-'''Substitui cada byte por outro usando uma tabela não linear'''
-def subBytes():
-    return 0
-
-'''Desloca cada linha do state para a esquerda'''
-def shiftRows():
-    return 0
-
-'''Mistura os bytes de cada coluna usando operações em GF(2⁸)'''
-def mixColumns():
-    return 0
-
-'''Faz XOR do estado com parte da chave expandida'''
-def addRoundKey():
-    return 0
-
-def cifragem(caminho_arquivo_entrada,caminho_arquivo_saida):
-    print(f"caminho de entrada: {caminho_arquivo_entrada}")
-    print(f"caminho de saída: {caminho_arquivo_saida}")
+def decifragem(caminho_arquivo_entrada,caminho_arquivo_saida):
     dados_binarios = ler_arquivo(caminho_arquivo_entrada)
-    aplicar_padding_PKCS7(dados_binarios)
+    remover_padding_PKCS7(dados_binarios)
 
