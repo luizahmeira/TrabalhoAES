@@ -32,10 +32,11 @@ def botao_clicado():
 
 def efetuar_cifragem():
     caminho_arquivo_saida = entrada_destino.get()
+    chave = entrada_chave.get()
     if not caminho_arquivo_saida:
         print("Não foi informado um caminho de destino")
         return
-    cfm.cifragem(caminho_arquivo_entrada,caminho_arquivo_saida)
+    cfm.cifragem(caminho_arquivo_entrada,caminho_arquivo_saida,chave)
 
 def chave_cifragem_decifragem(app):
     entrada_chave = ctk.CTkEntry(
@@ -45,6 +46,7 @@ def chave_cifragem_decifragem(app):
         height=40
     )
     entrada_chave.pack(pady=(50, 30))
+    return entrada_chave
 
 def cifrar_decifrar(app):
     frame_botoes = ctk.CTkFrame(master=app, fg_color="transparent")
@@ -97,6 +99,6 @@ def escolher_arquivo(app):
 definindo_aparencia()
 app = criando_janela_programa()
 entrada_destino = escolher_arquivo(app)
-chave_cifragem_decifragem(app)
+entrada_chave = chave_cifragem_decifragem(app)
 cifrar_decifrar(app)
 app.mainloop()

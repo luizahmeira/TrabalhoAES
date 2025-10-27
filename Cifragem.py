@@ -30,6 +30,15 @@ def aplicar_padding_PKCS7(dados):
     print(dados_com_padding)
     return dados_com_padding
 
+'''agora precisamos dividir os dados em blocos de 16 bytes após fazer o padding para ent fazer a matriz 4x4'''
+def dividir_blocos(dados):
+    tamanho_bloco = 16
+    lista_blocos = []
+    for i in range(0, len(dados), tamanho_bloco):
+        bloco = dados[i:i + tamanho_bloco]
+        lista_blocos.append(bloco)
+    return lista_blocos
+
 '''Substitui cada byte por outro usando uma tabela não linear'''
 def subBytes():
     return 0
@@ -46,9 +55,11 @@ def mixColumns():
 def addRoundKey():
     return 0
 
-def cifragem(caminho_arquivo_entrada,caminho_arquivo_saida):
+def cifragem(caminho_arquivo_entrada,caminho_arquivo_saida,chave):
     print(f"caminho de entrada: {caminho_arquivo_entrada}")
     print(f"caminho de saída: {caminho_arquivo_saida}")
     dados_binarios = ler_arquivo(caminho_arquivo_entrada)
-    aplicar_padding_PKCS7(dados_binarios)
+    dados_com_padding = aplicar_padding_PKCS7(dados_binarios)
+    lista_blocos = dividir_blocos(dados_com_padding)
+    print(lista_blocos)
 
