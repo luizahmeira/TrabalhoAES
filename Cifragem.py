@@ -53,26 +53,26 @@ RCON = (
 )
 
 #realização de multiplicação por x (0x02) em GF(2^8)
-def xtime(a):
+def xtempo(a):
     return ((a << 1) ^ 0x1b) & 0xff if a & 0x80 else (a << 1) & 0xff
 
-def multiply_by_02(a):
-    return xtime(a)
+def multiplicar_por_02(a):
+    return xtempo(a)
 
-def multiply_by_03(a):
-    return multiply_by_02(a) ^ a
+def multiplicar_por_03(a):
+    return multiplicar_por_02(a) ^ a
 
-def multiply_by_09(a):
-    return xtime(xtime(xtime(a))) ^ a
+def multiplicar_por_09(a):
+    return xtempo(xtempo(xtempo(a))) ^ a
 
-def multiply_by_0b(a):
-    return xtime(xtime(xtime(a))) ^ xtime(a) ^ a
+def multiplicar_por_0b(a):
+    return xtempo(xtempo(xtempo(a))) ^ xtempo(a) ^ a
 
-def multiply_by_0d(a):
-    return xtime(xtime(xtime(a))) ^ xtime(xtime(a)) ^ a
+def multiplicar_por_0d(a):
+    return xtempo(xtempo(xtempo(a))) ^ xtempo(xtempo(a)) ^ a
 
-def multiply_by_0e(a):
-    return xtime(xtime(xtime(a))) ^ xtime(xtime(a)) ^ xtime(a)
+def multiplicar_por_0e(a):
+    return xtempo(xtempo(xtempo(a))) ^ xtempo(xtempo(a)) ^ xtempo(a)
 
 '''expansão de chave'''
 
@@ -111,14 +111,14 @@ def key_expansion(chave_bytes):
 def ler_arquivo(caminho_arquivo_entrada):
     with open(caminho_arquivo_entrada, "rb") as f:
         dados_binarios = f.read()
-    print(f"Dados binários lidos ({len(dados_binarios)} bytes).") # Print para debug
+    print(f"Dados binários lidos ({len(dados_binarios)} bytes)")
     return dados_binarios
 
 #escreve os dados no arquivo de destino binario
 def escrever_arquivo(caminho_arquivo_saida,dados):
     with open(caminho_arquivo_saida, "wb") as f:
         f.write(dados)
-    print(f"Dados escritos em {caminho_arquivo_saida}.") # Print para debug
+    print(f"Dados escritos em {caminho_arquivo_saida}.")
 
 #aplica o PKCS#7 para os blocos de 16 bytes
 def aplicar_padding_PKCS7(dados):
@@ -128,7 +128,7 @@ def aplicar_padding_PKCS7(dados):
         faltando = tamanho_bloco
     padding = bytes([faltando] * faltando)
     dados_com_padding = dados + padding
-    print(f"Padding aplicado. Novo tamanho: {len(dados_com_padding)}") # Print para debug
+    print(f"Padding feito, novo tamanho: {len(dados_com_padding)}")
     return dados_com_padding
 
 #divide os dados em blocos de 16 bytes
@@ -152,17 +152,17 @@ def matriz_4x4(bloco):
 def remover_padding_PKCS7(dados):
     tamanho_bloco = 16
     if not dados:
-        raise ValueError("Dados vazios para remover padding.")
+        raise ValueError("Dados vazios para remover padding")
 
     ultimo_byte = dados[-1]
 
     #validar o padding
     if ultimo_byte < 1 or ultimo_byte > tamanho_bloco or ultimo_byte > len(dados):
-        raise ValueError("Padding inválido ou corrompido.")
+        raise ValueError("Padding inválido ou corrompido")
 
     #verifica se os bytes de padding correspondem ao valor do último byte
     if not all(b == ultimo_byte for b in dados[-ultimo_byte:]):
-         raise ValueError("Padding inválido ou corrompido (bytes inconsistentes).")
+         raise ValueError("Padding inválido ou corrompido")
 
     return dados[:-ultimo_byte]
 
@@ -185,10 +185,10 @@ def mixColumns(state):
     novo_state = [[0] * 4 for _ in range(4)]
     for c in range(4):
         a0, a1, a2, a3 = state[0][c], state[1][c], state[2][c], state[3][c]
-        novo_state[0][c] = multiply_by_02(a0) ^ multiply_by_03(a1) ^ a2 ^ a3
-        novo_state[1][c] = a0 ^ multiply_by_02(a1) ^ multiply_by_03(a2) ^ a3
-        novo_state[2][c] = a0 ^ a1 ^ multiply_by_02(a2) ^ multiply_by_03(a3)
-        novo_state[3][c] = multiply_by_03(a0) ^ a1 ^ a2 ^ multiply_by_02(a3)
+        novo_state[0][c] = multiplicar_por_02(a0) ^ multiplicar_por_03(a1) ^ a2 ^ a3
+        novo_state[1][c] = a0 ^ multiplicar_por_02(a1) ^ multiplicar_por_03(a2) ^ a3
+        novo_state[2][c] = a0 ^ a1 ^ multiplicar_por_02(a2) ^ multiplicar_por_03(a3)
+        novo_state[3][c] = multiplicar_por_03(a0) ^ a1 ^ a2 ^ multiplicar_por_02(a3)
     return novo_state
 
 def addRoundKey(state, round_key):
@@ -199,17 +199,17 @@ def addRoundKey(state, round_key):
 
 
 def cifragem(caminho_arquivo_entrada, caminho_arquivo_saida, chave):
-    print(f"\n--- Iniciando Cifragem ---")
+    print(f"\nIniciando a cifragem")
 
     #preparar a chave e gerar chaves de rodada
     try:
         chave_bytes = bytes([int(b) for b in chave.split(',')])
     except ValueError:
-        print("A chave deve ser fornecida em bytes decimais separados por vírgula.")
+        print("A chave deve ser dada em bytes decimais separados por vírgula")
         return
 
     if len(chave_bytes) != 16:
-        print(f"O AES-128 requer uma chave de 16 bytes, mas foram fornecidos {len(chave_bytes)} bytes.")
+        print(f"O AES-128 precisa de uma chave de 16 bytes, mas foram dados {len(chave_bytes)} bytes")
         return
 
     round_keys = key_expansion(chave_bytes)
@@ -243,7 +243,7 @@ def cifragem(caminho_arquivo_entrada, caminho_arquivo_saida, chave):
 
     #escritaa
     escrever_arquivo(caminho_arquivo_saida, dados_cifrados)
-    print(f"--- Cifragem Concluída. Arquivo salvo em: {caminho_arquivo_saida} ---")
+    print(f"Cifragem Concluída. Arquivo salvo em: {caminho_arquivo_saida}")
 
 
 '''decifragem'''
@@ -265,15 +265,15 @@ def invMixColumns(state):
     novo_state = [[0] * 4 for _ in range(4)]
     for c in range(4):
         a0, a1, a2, a3 = state[0][c], state[1][c], state[2][c], state[3][c]
-        novo_state[0][c] = multiply_by_0e(a0) ^ multiply_by_0b(a1) ^ multiply_by_0d(a2) ^ multiply_by_09(a3)
-        novo_state[1][c] = multiply_by_09(a0) ^ multiply_by_0e(a1) ^ multiply_by_0b(a2) ^ multiply_by_0d(a3)
-        novo_state[2][c] = multiply_by_0d(a0) ^ multiply_by_09(a1) ^ multiply_by_0e(a2) ^ multiply_by_0b(a3)
-        novo_state[3][c] = multiply_by_0b(a0) ^ multiply_by_0d(a1) ^ multiply_by_09(a2) ^ multiply_by_0e(a3)
+        novo_state[0][c] = multiplicar_por_0e(a0) ^ multiplicar_por_0b(a1) ^ multiplicar_por_0d(a2) ^ multiplicar_por_09(a3)
+        novo_state[1][c] = multiplicar_por_09(a0) ^ multiplicar_por_0e(a1) ^ multiplicar_por_0b(a2) ^ multiplicar_por_0d(a3)
+        novo_state[2][c] = multiplicar_por_0d(a0) ^ multiplicar_por_09(a1) ^ multiplicar_por_0e(a2) ^ multiplicar_por_0b(a3)
+        novo_state[3][c] = multiplicar_por_0b(a0) ^ multiplicar_por_0d(a1) ^ multiplicar_por_09(a2) ^ multiplicar_por_0e(a3)
     return novo_state
 
 
 def decifragem(caminho_arquivo_entrada, caminho_arquivo_saida, chave):
-    print(f"\n--- Iniciando Decifragem ---")
+    print(f"Iniciando a decifragem")
 
     #preparar a chave e gerar chaves de rodada
     try:
@@ -283,7 +283,7 @@ def decifragem(caminho_arquivo_entrada, caminho_arquivo_saida, chave):
         return
 
     if len(chave_bytes) != 16:
-        print(f"O AES-128 requer uma chave de 16 bytes, mas foram fornecidos {len(chave_bytes)} bytes.")
+        print(f"O AES-128 aceita uma chave de 16 bytes, mas foram dados {len(chave_bytes)} bytes")
         return
 
     round_keys = key_expansion(chave_bytes)
@@ -324,7 +324,7 @@ def decifragem(caminho_arquivo_entrada, caminho_arquivo_saida, chave):
     try:
         dados_sem_padding = remover_padding_PKCS7(dados_decifrados)
         escrever_arquivo(caminho_arquivo_saida, dados_sem_padding)
-        print(f"--- Decifragem Concluída. Arquivo salvo em: {caminho_arquivo_saida} ---")
+        print(f"Decifragem finalizada! Arquivo salvo em: {caminho_arquivo_saida}")
     except ValueError as e:
-        print(f"Erro ao remover padding: {e}. Verifique se a chave está correta.")
+        print(f"Erro ao remover padding: {e}")
 
