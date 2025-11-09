@@ -52,6 +52,17 @@ RCON = (
     0x80, 0x1b, 0x36
 )
 
+def print_state_hex(state, titulo):
+    """Imprime a matriz de estado 4x4 no formato hexadecimal"""
+    print(f"\n**** {titulo} ****")
+    for r in range(4):
+        linha = " ".join([f"0x{state[r][c]:02x}" for c in range(4)])
+        print(linha)
+
+def print_word_hex(palavra):
+    """Imprime uma palavra de 4 bytes no formato hexadecimal entre colchetes."""
+    return "[" + " ".join([f"0x{b:02x}" for b in palavra]) + "]"
+
 #realização de multiplicação por x (0x02) em GF(2^8)
 def xtempo(a):
     return ((a << 1) ^ 0x1b) & 0xff if a & 0x80 else (a << 1) & 0xff
@@ -76,30 +87,59 @@ def multiplicar_por_0e(a):
 
 '''expansão de chave'''
 
+
 def key_expansion(chave_bytes):
     """vai gerar 11 chaves de rodada para o AES-128"""
     key_bytes = list(chave_bytes)
-    W = [key_bytes[i*4 : (i+1)*4] for i in range(4)]
+    W = [key_bytes[i * 4: (i + 1) * 4] for i in range(4)]
+
+    state_key0 = [[W[c][r] for c in range(4)] for r in range(4)]
+    print_state_hex(state_key0, "Chave")
+    print_state_hex(state_key0, "RoundKey=0")
 
     for i in range(4, 44):
-        temp = list(W[i-1])
+        temp = list(W[i - 1])
 
         if i % 4 == 0:
 
-            temp = temp[1:] + temp[:1] #rotword
+            print(f"\n**** RoundKey={i // 4} ****")
+            print("Etapas para geração da primeira word")
+            print(f"1) Cópia da última palavra da roundkey anterior: {print_word_hex(temp)}")
 
-            temp = [S_BOX[b] for b in temp] #subword
+            temp_rotword = temp[1:] + temp[:1]  #rotword
+            print(f"2) Rotacionar os bytes desta palavra (RotWord): {print_word_hex(temp_rotword)}")
 
-            rcon_value = RCON[i // 4] #rcon
-            temp[0] = temp[0] ^ rcon_value
+            temp_subword = [S_BOX[b] for b in temp_rotword]  #subword
+            print(f"3) Substituir os bytes da palavra (SubWord): {print_word_hex(temp_subword)}")
 
-        W.append([W[i-4][j] ^ temp[j] for j in range(4)])
+            rcon_value = RCON[i // 4]  #rcon
+            rcon_word = [rcon_value, 0x00, 0x00, 0x00]
+            print(f"4) Gerar a RoundConstant: {print_word_hex(rcon_word)}")
+
+            temp = [temp_subword[j] ^ rcon_word[j] for j in range(4)]
+            print(f"5) XOR de (3) com (4): {print_word_hex(temp)}")
+
+            temp_final = [W[i - 4][j] ^ temp[j] for j in range(4)]
+            print(f"6) XOR 1a. palavra da roundkey anterior com (5): {print_word_hex(temp_final)}")
+
+            W.append(temp_final)
+
+        else:
+            W.append([W[i - 4][j] ^ temp[j] for j in range(4)])
+
+        if i % 4 == 3:
+            round_key = []
+            for j in range(4):
+                round_key.extend(W[i - 3 + j])
+
+            current_state_key = [[round_key[r + 4 * c] for c in range(4)] for r in range(4)]
+            print_state_hex(current_state_key, "RoundKey=" + str(i // 4))
 
     round_keys = []
     for i in range(11):
         round_key = []
         for j in range(4):
-            round_key.extend(W[i*4 + j])
+            round_key.extend(W[i * 4 + j])
         round_keys.append(round_key)
 
     return round_keys
@@ -221,30 +261,45 @@ def cifragem(caminho_arquivo_entrada, caminho_arquivo_saida, chave):
 
     dados_cifrados = b""
 
-    #loop de cifragem (modo ECB)
     for bloco in lista_blocos:
         state = matriz_4x4(bloco)
 
-        state = addRoundKey(state, round_keys[0]) #rodada 0: AddRoundKey
+        print_state_hex(state, "Texto simples")
 
-        for i in range(1, 10): #rodadas 1 a 9 (Completas)
+        # Rodada 0: AddRoundKey
+        state = addRoundKey(state, round_keys[0])
+        print_state_hex(state, "AddRoundKey-Round 0")
+
+        for i in range(1, 10):  #rodadas 1 a 9
             state = subBytes(state)
+            print_state_hex(state, f"SubBytes-Round {i}")
+
             state = shiftRows(state)
+            print_state_hex(state, f"ShiftRows-Round {i}")
+
             state = mixColumns(state)
+            print_state_hex(state, f"MixedColumns-Round {i}")
+
             state = addRoundKey(state, round_keys[i])
+            print_state_hex(state, f"addRoundKey-Round {i}")
 
-        state = subBytes(state) #rodada 10 (Final)
+        state = subBytes(state)
+        print_state_hex(state, "SubBytes-Round 10")
+
         state = shiftRows(state)
-        state = addRoundKey(state, round_keys[10])
+        print_state_hex(state, "ShiftRows-Round 10")
 
-        #converte state (4x4) de volta para bloco (16 bytes)
+        state = addRoundKey(state, round_keys[10])
+        print_state_hex(state, "addRoundKey-Round 10")
+
         bloco_cifrado = bytes([state[r][c] for c in range(4) for r in range(4)])
         dados_cifrados += bloco_cifrado
 
-    #escritaa
+        final_state = matriz_4x4(bloco_cifrado)
+        print_state_hex(final_state, "Texto cifrado")
+
     escrever_arquivo(caminho_arquivo_saida, dados_cifrados)
     print(f"Cifragem Concluída. Arquivo salvo em: {caminho_arquivo_saida}")
-
 
 '''decifragem'''
 

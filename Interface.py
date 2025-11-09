@@ -1,5 +1,3 @@
-# Interface.py
-
 from tkinter import filedialog
 import Cifragem as cfm
 import customtkinter as ctk
